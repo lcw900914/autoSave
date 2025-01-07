@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <title>低延迟 HLS 播放器</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        video {
+            width: 80%;
+            max-width: 800px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <video id="video" controls></video>
+    <script>
+        const video = document.getElementById('video');
+        const videoSrc = 'http://localhost:8080/live/livestream.m3u8'; // 根据实际 URL 调整
+
+        if (Hls.isSupported()) {
+            const hls = new Hls({
+                maxBufferLength: 6,                // 最大缓冲长度（秒）
+                maxMaxBufferLength: 10,            // 最大缓冲长度的上限（秒）
+                maxBufferSize: 60 * 1000 * 1000,    // 最大缓冲大小（字节）
+                lowBufferWatchdogPeriod: 0.5,      // 低缓冲监控周期（秒）
+                highBufferWatchdogPeriod: 3        // 高缓冲监控周期（秒）
+            });
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                video.play();
+            });
+            hls.on(Hls.Events.ERROR, function(event, data) {
+                console.error('HLS.js 错误:', data);
+            });
+        }
+        // 兼容 Safari 浏览器
+        else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            video.src = videoSrc;
+            video.addEventListener('loadedmetadata', function() {
+                video.play();
+            });
+        }
+    </script>
+</body>
+</html>
